@@ -3,6 +3,7 @@ package org.matheuscordeiro.socialapi.rest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 class UserResourceTest {
@@ -42,7 +44,7 @@ class UserResourceTest {
     @Test
     @DisplayName("should return error when json is not valid")
     @Order(2)
-    void shouldCreateUserValidationError(){
+    void shouldCreateUserValidationError() {
         var user = new CreateUserRequest(null, null);
         var response = given()
                 .contentType(ContentType.JSON)
@@ -56,5 +58,18 @@ class UserResourceTest {
         List<Map<String, String>> errors = response.jsonPath().getList("errors");
         assertNotNull(errors.get(0).get("message"));
         assertNotNull(errors.get(1).get("message"));
+    }
+
+    @Test
+    @DisplayName("should list all users")
+    @Order(3)
+    void shouldListAllUsers() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get(apiURL)
+                .then()
+                .statusCode(200)
+                .body("size()", Matchers.is(1));
     }
 }
