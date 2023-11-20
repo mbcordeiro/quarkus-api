@@ -48,12 +48,12 @@ public class FollowerResource {
 
     @GET
     public Response list(@PathParam("userId") Long userId) {
-        var user = userRepository.findById(userId);
+        final var user = userRepository.findById(userId);
         if (user == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        var list = followerRepository.findByUser(userId);
-        var followerList = list.stream()
+        final var list = followerRepository.findByUser(userId);
+        final var followerList = list.stream()
                 .map(follower -> new FollowerResponse(follower.getId(), follower.getFollower().getName()))
                 .collect(Collectors.toList());
         return Response.ok(new FollowersPerUserResponse(list.size(), followerList)).build();
@@ -62,7 +62,7 @@ public class FollowerResource {
     @DELETE
     @Transactional
     public Response unfollowUser(@PathParam("userId") Long userId, @QueryParam("followerId") Long followerId) {
-        var user = userRepository.findById(userId);
+        final var user = userRepository.findById(userId);
         if (user == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

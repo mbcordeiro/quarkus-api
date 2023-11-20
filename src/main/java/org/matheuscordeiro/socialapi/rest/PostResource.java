@@ -54,9 +54,9 @@ public class PostResource {
         if (!followerRepository.follows(follower, user)) {
             return Response.status(Response.Status.FORBIDDEN).entity("You can't see these posts").build();
         }
-        var query = postRepository.find("user", Sort.by("dateTime", Sort.Direction.Descending), user);
-        var list = query.list();
-        var postResponseList = list.stream().map(PostResponse::fromEntity).collect(Collectors.toList());
+        final var query = postRepository.find("user", Sort.by("dateTime", Sort.Direction.Descending), user);
+        final var list = query.list();
+        final var postResponseList = list.stream().map(PostResponse::fromEntity).collect(Collectors.toList());
         return Response.ok(postResponseList).build();
     }
 }
