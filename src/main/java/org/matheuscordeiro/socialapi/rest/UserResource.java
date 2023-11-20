@@ -18,4 +18,16 @@ public class UserResource {
     public Response list() {
         return Response.ok().build();
     }
+
+    @DELETE
+    @Path("{id}")
+    public Response delete(@PathParam("id") Long id) {
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("{id}")
+    public Response update(@PathParam("id") Long id, CreateUserRequest createUserRequest) {
+        return Response.noContent().build();
+    }
 }
