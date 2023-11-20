@@ -1,12 +1,14 @@
 package org.matheuscordeiro.socialapi.rest;
 
+import jakarta.transaction.Transactional;
+import jakarta.validation.Validator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
-import org.matheuscordeiro.socialapi.domain.service.UserService;
+import org.matheuscordeiro.socialapi.domain.model.User;
+import org.matheuscordeiro.socialapi.domain.repository.UserRepository;
 import org.matheuscordeiro.socialapi.rest.dto.CreateUserRequest;
-import jakarta.validation.Validator;
 import org.matheuscordeiro.socialapi.rest.dto.ResponseError;
 
 @Path("/users")
@@ -14,31 +16,42 @@ import org.matheuscordeiro.socialapi.rest.dto.ResponseError;
 @Produces(MediaType.APPLICATION_JSON)
 @RequiredArgsConstructor
 public class UserResource {
-    private final UserService userService;
+    private final UserRepository userRepository;
+
     private Validator validator;
 
     @POST
-    public Response create(CreateUserRequest createUserRequest) {
-        final var violations = validator.validate(createUserRequest);
+    @Transactional
+    public Response create(CreateUserRequest userRequest) {
+        final var violations = validator.validate(userRequest);
         if (!violations.isEmpty()) {
             return ResponseError
                     .createFromValidation(violations)
                     .withStatusCode(ResponseError.UNPROCESSABLE_ENTITY_STATUS);
         }
-        userService.create(createUserRequest);
-        return Response.status(Response.Status.CREATED.getStatusCode()).build();
+        final var user = new User();
+        user.setAge(userRequest.age());
+        user.setName(userRequest.name());
+        userRepository.persist(user);
+        return Response
+                .status(Response.Status.CREATED.getStatusCode())
+                .entity(user)
+                .build();
     }
 
     @GET
     public Response list() {
-        return Response.ok(userService.list()).build();
+        return Response.ok(userRepository.findAll()).build();
     }
 
     @PUT
     @Path("{id}")
-    public Response update(@PathParam("id") Long id, CreateUserRequest createUserRequest) {
-        final var user = userService.update(id, createUserRequest);
-        if (user != null) {
+    @Transactional
+    public Response update(@PathParam("id") Long id, CreateUserRequest userData) {
+        final var user = userRepository.findById(id);
+        if(user != null){
+            user.setName(userData.name());
+            user.setAge(userData.age());
             return Response.noContent().build();
         }
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -47,8 +60,9 @@ public class UserResource {
     @DELETE
     @Path("{id}")
     public Response delete(@PathParam("id") Long id) {
-        final var isDeleted = userService.delete(id);
-        if (isDeleted) {
+        final var user = userRepository.findById(id);
+        if(user != null){
+            userRepository.delete(user);
             return Response.noContent().build();
         }
         return Response.status(Response.Status.NOT_FOUND).build();
