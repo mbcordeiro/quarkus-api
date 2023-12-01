@@ -5,6 +5,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class PostResourceTest {
 
     @BeforeEach
     @Transactional
-    public void setUP(){
+    public void setUP() {
         final var user = new User();
         user.setAge(27);
         user.setName("Matheus");
@@ -66,7 +67,7 @@ class PostResourceTest {
 
     @Test
     @DisplayName("should create a post for a user")
-     void shouldCreatePost(){
+    void shouldCreatePost() {
         final var postRequest = new CreatePostRequest("Some text");
         given()
                 .contentType(ContentType.JSON)
@@ -80,7 +81,7 @@ class PostResourceTest {
 
     @Test
     @DisplayName("should return 404 when trying to make a post for an not exist user")
-    void shouldPostForAnNotExistUserTest(){
+    void shouldPostForAnNotExistUserTest() {
         final var postRequest = new CreatePostRequest("Some text");
         given()
                 .contentType(ContentType.JSON)
@@ -94,12 +95,63 @@ class PostResourceTest {
 
     @Test
     @DisplayName("should return 404 when user doesn't exist")
-    void shouldListPostUserNotFoundTest(){
+    void shouldListPostUserNotFoundTest() {
         given()
                 .pathParam("userId", 999)
                 .when()
                 .get()
                 .then()
                 .statusCode(404);
+    }
+
+    @Test
+    @DisplayName("should return 400 when followerId header is not present")
+    void shouldListPostFollowerHeaderNotSendTest() {
+        given()
+                .pathParam("userId", userId)
+                .when()
+                .get()
+                .then()
+                .statusCode(400)
+                .body(Matchers.is("You forgot the header followerId"));
+    }
+
+    @Test
+    @DisplayName("should return 400 when follower doesn't exist")
+    void shouldListPostFollowerNotFoundTest() {
+        given()
+                .pathParam("userId", userId)
+                .header("followerId", 999)
+                .when()
+                .get()
+                .then()
+                .statusCode(400)
+                .body(Matchers.is("Inexistent followerId"));
+    }
+
+    @Test
+    @DisplayName("should return 403 when follower isn't a follower")
+    void shouldListPostNotAFollower() {
+        given()
+                .pathParam("userId", userId)
+                .header("followerId", userNotFollowerId)
+                .when()
+                .get()
+                .then()
+                .statusCode(403)
+                .body(Matchers.is("You can't see these posts"));
+    }
+
+    @Test
+    @DisplayName("should list posts")
+    void shouldListPostsTest() {
+        given()
+                .pathParam("userId", userId)
+                .header("followerId", userFollowerId)
+                .when()
+                .get()
+                .then()
+                .statusCode(200)
+                .body("size()", Matchers.is(1));
     }
 }
