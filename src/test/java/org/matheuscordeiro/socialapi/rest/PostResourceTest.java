@@ -91,4 +91,15 @@ class PostResourceTest {
                 .then()
                 .statusCode(404);
     }
+
+    @Test
+    @DisplayName("should return 404 when user doesn't exist")
+    void shouldListPostUserNotFoundTest(){
+        given()
+                .pathParam("userId", 999)
+                .when()
+                .get()
+                .then()
+                .statusCode(404);
+    }
 }
